@@ -1,13 +1,27 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:todo_firebase/models/task_model.dart';
 
 class UpdateTaskScreen extends StatefulWidget {
-  const UpdateTaskScreen({Key? key}) : super(key: key);
+  final TaskModel taskModel;
+
+  const UpdateTaskScreen({Key? key, required this.taskModel}) : super(key: key);
 
   @override
   _UpdateTaskScreenState createState() => _UpdateTaskScreenState();
 }
 
 class _UpdateTaskScreenState extends State<UpdateTaskScreen> {
+  var taskNameController = TextEditingController();
+
+  @override
+  void initState() {
+    taskNameController.text = widget.taskModel.taskName;
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,6 +33,7 @@ class _UpdateTaskScreenState extends State<UpdateTaskScreen> {
         child: Column(
           children: [
             TextField(
+              controller: taskNameController,
               decoration: InputDecoration(
                 hintText: 'Task Name',
                 prefixIcon: Icon(Icons.add_comment),
@@ -28,7 +43,27 @@ class _UpdateTaskScreenState extends State<UpdateTaskScreen> {
               height: 20,
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () async {
+                var taskName = taskNameController.text;
+                if (taskName.isEmpty) {
+                  Fluttertoast.showToast(msg: 'Please provide task name');
+                  return;
+                }
+
+                User? user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  var taskRef = FirebaseDatabase.instance
+                      .reference()
+                      .child('tasks')
+                      .child(user!.uid);
+
+                  await taskRef
+                      .child(widget.taskModel.nodeId)
+                      .update({'taskName': taskName});
+
+                  Navigator.of(context).pop();
+                }
+              },
               child: Container(
                 alignment: Alignment.center,
                 padding: EdgeInsets.symmetric(vertical: 10.0),

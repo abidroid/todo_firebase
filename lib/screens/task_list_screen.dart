@@ -2,11 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task_model.dart';
 import 'package:todo_firebase/screens/add_task_screen.dart';
 import 'package:todo_firebase/screens/login_screen.dart';
 import 'package:todo_firebase/screens/profile_screen.dart';
+import 'package:todo_firebase/screens/update_task_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({Key? key}) : super(key: key);
@@ -89,10 +91,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
                   return Container(
                     padding: EdgeInsets.all(8.0),
-                    margin: EdgeInsets.only(bottom: 8.0),
+                    margin: EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.white54,
+                      color: Colors.white,
                     ),
                     child: Row(children: [
                       Expanded(
@@ -100,7 +102,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(taskModel.taskName),
-                            Text(getHumanReadableDate( taskModel.dt))
+                            Text(getHumanReadableDate(taskModel.dt))
                           ],
                         ),
                       ),
@@ -108,9 +110,52 @@ class _TaskListScreenState extends State<TaskListScreen> {
                         child: Column(
                           children: [
                             IconButton(
-                                onPressed: () {}, icon: Icon(Icons.delete)),
+                                onPressed: () async {
+                                  if (taskRef != null) {
+                                    // show alertdialog
+
+                                    showDialog(
+                                        barrierDismissible: false,
+                                        context: context,
+                                        builder: (ctx) {
+                                          return AlertDialog(
+                                            title: Text('Confirmation'),
+                                            content: Text(
+                                                'Are you sure to delete ?'),
+                                            actions: [
+                                              TextButton(onPressed: () {
+                                                Navigator.of(ctx).pop();
+                                              }, child: Text('No')),
+
+
+                                              TextButton(onPressed: () async {
+                                                try {
+                                                  await taskRef!
+                                                      .child(taskModel.nodeId)
+                                                      .remove();
+
+                                                }
+                                                catch ( e ){
+                                                print(e.toString());
+                                                Fluttertoast.showToast(msg: 'failed');
+                                                }
+
+                                                Navigator.of(ctx).pop();
+
+                                              }, child: Text('Yes')),
+                                            ],
+                                          );
+                                        });
+                                  }
+                                },
+                                icon: Icon(Icons.delete)),
                             IconButton(
-                                onPressed: () {}, icon: Icon(Icons.edit)),
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (context){
+                                    return UpdateTaskScreen(taskModel: taskModel);
+                                  }));
+
+                                }, icon: Icon(Icons.edit)),
                           ],
                         ),
                       )
@@ -127,11 +172,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  String getHumanReadableDate( int dt ){
-
+  String getHumanReadableDate(int dt) {
     DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(dt);
     return DateFormat('dd/MM/yyyy').format(dateTime);
-
-    //return '';
   }
 }
