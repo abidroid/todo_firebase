@@ -55,7 +55,7 @@ class _UpdateTaskScreenState extends State<UpdateTaskScreen> {
                   var taskRef = FirebaseDatabase.instance
                       .reference()
                       .child('tasks')
-                      .child(user!.uid);
+                      .child(user.uid);
 
                   await taskRef
                       .child(widget.taskModel.nodeId)
