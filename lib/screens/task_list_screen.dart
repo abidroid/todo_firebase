@@ -72,8 +72,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
         builder: (context, snap) {
           if (snap.hasData && !snap.hasError) {
             var event = snap.data as Event;
-
+            print(event.toString());
             var snshot = event.snapshot.value;
+
+            if( snshot == null ){
+              return Center(child: Text('No tasks yet'));
+            }
 
             Map<String, dynamic> map = Map<String, dynamic>.from(snshot);
             print(map.toString());
@@ -168,7 +172,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
             );
           }
         },
-      ),
+      )
+
     );
   }
 
