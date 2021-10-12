@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:ndialog/ndialog.dart';
 import 'package:todo_firebase/models/user_model.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -32,7 +34,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         userModel =
             UserModel.fromJson(Map<String, dynamic>.from(dataSnapshot.value));
-        setState(() {});
+       setState(() {
+
+       });
       });
     }
   }
@@ -45,19 +49,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     image = tempImage;
     showLocalImage = true;
     setState(() {});
+
+    ProgressDialog progressDialog = ProgressDialog(
+      context,
+      title: Text('Uploading !!!'),
+      message: Text('Please wait'),
+    );
+    progressDialog.show();
+    // upload to firebase storage
+
+    var fileName = DateTime.now().millisecondsSinceEpoch.toString() + '.jpg';
+    UploadTask uploadTask =
+        FirebaseStorage.instance.ref().child(fileName).putFile(image!);
+
+    TaskSnapshot snapshot = await uploadTask;
+    String imageUrl = await snapshot.ref.getDownloadURL();
+    print(imageUrl);
+
+    // update user in realtime database
+
+    if (userRef != null) {
+      userRef!.update({'profileImage': imageUrl});
+    }
+
+    progressDialog.dismiss();
   }
 
   _pickImageCamera() async {
     XFile? xFile = await ImagePicker().pickImage(source: ImageSource.camera);
 
-    if( xFile == null) return;
+    if (xFile == null) return;
 
     final tempImage = File(xFile.path);
     image = tempImage;
     showLocalImage = true;
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   @override
@@ -94,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   image!,
                                   width: 120,
                                   height: 120,
-                            fit: BoxFit.fill,
+                                  fit: BoxFit.fill,
                                 )
                               : Image.network(
                                   userModel!.profileImage == ''
@@ -102,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       : userModel!.profileImage,
                                   width: 120,
                                   height: 120,
-                            fit: BoxFit.fill,
+                                  fit: BoxFit.fill,
                                 ),
                         ),
                         Positioned(
